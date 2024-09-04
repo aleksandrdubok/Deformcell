@@ -1,4 +1,4 @@
-deformcell
+Deformcell
 ========
 
 A program for cell deformation compatible with Vienna ab initio simulation package POSCAR and CONTCAR file formats.

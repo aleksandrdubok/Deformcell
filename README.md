@@ -15,10 +15,10 @@ Basic usage
 
 $deformcell -t TYPE_OF_DEFORMATION -s STEP -i INPUT_FILE -o OUTPUT_FILE
 
-For help enter: $deformcell -h
+For help enter: $deformcell -h. 
 This script introduce the deformation by multyplying the matrix of basis vectors from input POSCAR or CONTCAR file by the deformation matrix (which is transposed Jacobian matrix 
-of deformation, see https://doi.org/10.1103/PhysRevB.52.12627 for reference).
-When using the deformcell note, that input file must be in VASP POSCAR (or CONTCAR) file format, the coordinates being direct (see https://www.vasp.at/wiki/index.php/POSCAR)
+of deformation, see https://doi.org/10.1103/PhysRevB.52.12627 for reference). 
+When using the deformcell note, that input file must be in VASP POSCAR (or CONTCAR) file format, the coordinates being direct (see https://www.vasp.at/wiki/index.php/POSCAR). 
 Note, that for any non-test task at least -t and -s options must be set. In the abscense of these two parameters, a trivial deformation of 0% is introduced.
   
 Examples of usage

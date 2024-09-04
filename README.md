@@ -24,8 +24,8 @@ Note, that for any non-test task at least -t and -s options must be set. In the 
 Examples of usage
 -----------
 
-Introduce the isostatic compression of 10%: $deformcell -t xyz -s -10 -i ./POSCAR -o ./mPOSCAR
-Introduce the uniaxial tension of 10% at cartesian x axis direction: $deformcell -t x -s 10 -i ./CONTCAR -o ./POSCAR 
+Introduce the isostatic compression of 10%: $deformcell -t volume -s -10 -i ./POSCAR -o ./mPOSCAR
+Introduce the uniaxial tension of 10% at cartesian x axis direction: $deformcell -t axialx -s 10 -i ./CONTCAR -o ./POSCAR 
 
 Authors
 -------

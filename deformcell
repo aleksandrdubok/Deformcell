@@ -1,0 +1,186 @@
+#!/usr/bin/env python
+# ***********************************************************
+#   File: deformcell[.py]
+#   Description: A program for cell deformation compatible with Vienna ab initio simulation package POSCAR and CONTCAR file formats.
+#
+#   Copyright 2024 Aleksandr Dubok
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#   Revision history:
+#      2024-03-05
+#        - Initial version
+# ***********************************************************
+
+
+import sys
+import os.path
+import os
+
+from optparse import OptionParser
+#from optparse import OptionGroup
+
+# Let's define parameters
+parser = OptionParser(usage="usage: %prog [options]", version="%prog 0.0.1")
+
+parser.add_option("-t", "--deformation-type", dest="deformation_type", help="specify the deformation type: axialx, axialy, axialz or volume", metavar="TYPE OF DEFORMATION", choices=["axialx", "axialy", "axialz", "volume"])
+parser.add_option("-o", "--output-file", dest="output_file", help="specify the step")
+parser.add_option("-i", "--input-file", dest="input_file", help="specify the step")
+parser.add_option("-s", "--step-size", type="float", dest="step_size", help="specify the step in % (the positive value for tension and negative for compaction)")
+
+(options, args) = parser.parse_args()
+
+if len(args) != 0:
+    parser.error("no args required, please check for mistakes in your command")
+if options.deformation_type == None:
+    print("WARNING --deformation-type (-t) tag is not provided. Default value of \"volume\" is used")
+    options.deformation_type = "volume"
+if options.step_size == None:
+    print("WARNING: --step-size (-s) tag is not provided. Default value of \"0\" is used")
+    options.step_size = 0.0
+if options.input_file == None:
+    print("WARNING: --input-file (-i)  tag is not provided. Default value of ./POSCAR is used")
+    options.input_file = os.getcwd() + "/POSCAR"
+if options.output_file == None:
+    print("WARNING: --output-file (-o)  tag is not provided. Default value of ./POSCAR_mod is used")
+    options.output_file = os.getcwd() + "/POSCAR_mod"
+if options.input_file == options.output_file:
+    parser.error("input and output files must be different")
+
+
+def read_file(path):  # reads the input file
+    try:
+        f = open(path)
+        file = f.readlines()
+    except:
+        print(path + "input file can't be readen")
+        f.close()
+        sys.exit(1)
+    f.close()
+    return file
+
+
+def matrix_multiplication(matrix_a, matrix_b):  # matrix multiplication
+    matrix_a_height = len(matrix_a)
+    matrix_a_width = int
+    matrix_b_width = int
+    for i in range(matrix_a_height):
+        if i == 0:
+            pass
+        elif len(matrix_a[i]) == len(matrix_a[i - 1]):
+            pass
+        else:
+            print(
+                'matrix_multiplication(): expected matrix_a as a list of same length lists. Check the format input file.')
+            sys.exit(1)
+        matrix_a_width = len(matrix_a[i])
+
+    matrix_b_height = len(matrix_b)
+    for i in range(matrix_b_height):
+        if i == 0:
+            pass
+        elif len(matrix_b[i]) == len(matrix_b[i - 1]):
+            pass
+        else:
+            print(
+                'matrix_multiplication(): expected matrix_b as a list of same length lists. Check the format of deformation matrix')
+            sys.exit(1)
+        matrix_b_width = len(matrix_b[i])
+    if matrix_a_width != matrix_b_height:
+        print(
+            'matrix_multiplication: width of matrix_a and height of matrix_b should be the same check the format of deformation matrix and input file')
+        sys.exit(1)
+    result_matrix = [[0 for i in range(matrix_a_height)] for i in range(matrix_b_width)]
+    for i in range(matrix_a_height):
+        for j in range(matrix_b_width):
+            for k in range(matrix_b_height):
+                result_matrix[i][j] += matrix_a[i][k] * matrix_b[k][j]
+    return result_matrix
+
+
+def matrix_transpose(matrix): #matrix transposing
+	transposed_matrix = list(zip(*matrix))
+	return transposed_matrix
+
+
+def get_the_basis_matrix(poscar):  # reading the 2-5 strings of input file to obtain the basis vectors
+    a_vector_string = poscar[2].split()  # reading the 3-d line which contains "a" basis vector
+    a_vector = list()
+    for i, value in enumerate(a_vector_string):  # transforming the string line into the list of float numbers
+        a_vector.append(float(a_vector_string[i]))
+    b_vector_string = poscar[3].split()  # reading the 4-th line which contains "b" basis vector
+    b_vector = list()
+    for i, value in enumerate(b_vector_string):
+        b_vector.append(float(b_vector_string[i]))
+    c_vector_string = poscar[4].split()  # reading the 5-th line which contains "c" basis vector
+    c_vector = list()
+    for i, value in enumerate(c_vector_string):
+        c_vector.append(float(c_vector_string[i]))
+
+    basis_matrix = [a_vector, b_vector, c_vector]  # basis matrix is ready to be processed
+    return basis_matrix
+
+
+def get_the_deformation_matrix():  # generating of deformation matrix, based on the -t tag
+    deformation_step = options.step_size / 100
+    deformation_type = options.deformation_type
+    deformation_matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    if deformation_step <= -1:
+        parser.error("can't deform to -100%")
+    if deformation_type == "axialx":
+        deformation_matrix = [[1 + deformation_step, 0, 0], [0, 1, 0], [0, 0, 1]]
+    if deformation_type == "axialy":
+        deformation_matrix = [[1, 0, 0], [0, 1 + deformation_step, 0], [0, 0, 1]]
+    if deformation_type == "axialz":
+        deformation_matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1 + deformation_step]]
+    if deformation_type == "volume":
+        deformation_matrix = [[(1. + deformation_step)**(1. / 3.), 0, 0], [0, (1. + deformation_step)**(1. / 3.), 0], [0, 0, (1. + deformation_step)**(1. / 3.)]]
+    return deformation_matrix
+
+
+def create_the_new_poscar(new_basis_matrix, poscar):  # generating the modded POSCAR
+    for j in range(3):
+        # poscar[j + 2] = ' '.join([format(i, '.16f') for i in new_basis_matrix[j]]) + '\n'
+        poscar[j + 2] = ' '.join([('%0.16f' % i) for i in new_basis_matrix[j]]) + '\n'
+    return poscar
+
+
+def write_poscar_file(poscar, destination):  # writing the modded POSCAR file
+    path = destination
+    try:
+        if os.path.exists(path):
+            print('The file ', path, ' exist')
+            sys.exit(1)
+        else:
+            pass
+        file = open(path, 'w')
+        for item in poscar:
+            file.write(item)
+    except:
+        print(path + " file can't be written")
+        file.close()
+        sys.exit(1)
+    file.close()
+
+
+# Now let's do the job
+poscar = read_file(options.input_file)  # Reading the input file (-i tag)
+
+if not (poscar[7].startswith("Direct") or poscar[7].startswith("direct") or poscar[6].startswith("Direct") or poscar[6].startswith("direct")):  # check, wether the direct tag is present in POSCAR
+    print("Warning! Ion positions must be provided in direct (fractional) coordinates. Check, wether the 5-th or 6-th string of input file contains a Direct (or direct tag)")
+
+basis_matrix = get_the_basis_matrix(poscar)  # reading the 3-5 strings of input file which contains the basis vetors
+deformation_matrix = get_the_deformation_matrix()  # based on -t tag value generatiog transformation matrix
+new_basis_matrix = matrix_multiplication(basis_matrix, matrix_transpose(deformation_matrix))  # multiplying the  basis_matrix and deformation_matrix
+new_poscar = create_the_new_poscar(new_basis_matrix, poscar)  # generating modded POSCAR
+write_poscar_file(new_poscar, options.output_file)  # writing the output
